@@ -12,7 +12,7 @@ const port = process.env.PORT || 5000;
 // middleWare
 app.use(
   cors({
-    origin: ["http://localhost:5173","https://rf-car-client-side.web.app","https://rf-car-client-side.firebaseapp.com"],
+    origin: ["http://localhost:5173","https://rf-car-client-side.web.app","https://rf-car-client-side.firebaseapp.com","https://rf-cars-projects.netlify.app"],
     credentials: true,
   })
 );
