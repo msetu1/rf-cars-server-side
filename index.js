@@ -12,7 +12,7 @@ const port = process.env.PORT || 5000;
 // middleWare
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: ["http://localhost:5173","https://rf-car-client-side.web.app","https://rf-car-client-side.firebaseapp.com"],
     credentials: true,
   })
 );
@@ -31,7 +31,6 @@ const client = new MongoClient(uri, {
 });
 // middleware
 const logger = (req, res, next) => {
-  console.log("log :info", req.method, req.url);
   next();
 };
 
@@ -50,6 +49,13 @@ const verifyToken = (req, res, next) => {
   });
 };
 
+// cookie options 
+const cookieOption={
+  httpOnly: true,
+  sameSite: process.env.NODE_ENV=== "production"?"none":"string",
+  secure: process.env.NODE_ENV=== "production"? true : false,
+};
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -62,24 +68,18 @@ async function run() {
     // auth related api
     app.post("/jwt", async (req, res) => {
       const user = req.body;
-      console.log("user logged", user);
+      // console.log("user logged", user);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "1h",
       });
 
-      res
-        .cookie("token", token, {
-          httpOnly: true,
-          secure: true,
-          sameSite: "none",
-        })
-        .send({ success: true });
+      res.cookie("token", token,cookieOption ).send({ success: true });
     });
     //  jwt token logged out
     app.post("/logout", async (req, res) => {
       const user = req.body;
-      console.log("logging out ", user);
-      res.clearCookie("token", { maxAge: 0 }).send({ success: true });
+      // console.log("logging out ", user);
+      res.clearCookie("token", { ...cookieOption,maxAge: 0 }).send({ success: true });
     });
 
     // service related api
@@ -107,9 +107,6 @@ async function run() {
 
     // my bookings
     app.get("/bookings/:email", logger, verifyToken, async (req, res) => {
-      console.log(req.params?.email);
-      console.log(' token owner', req.user);
-      
       if(req.user.email !== req.params.email){
         return res.status(403).send({message:'forbidden access'})
       }
@@ -139,7 +136,6 @@ async function run() {
         },
       };
       const result = await bookings.updateOne(query, data);
-      console.log(result);
       res.send(result);
     });
 
